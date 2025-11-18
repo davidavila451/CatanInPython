@@ -1,7 +1,27 @@
 import random
+
+#Handles all game logic. (Rolling dice, purchasing and placing cities/roads/cards)
+class GameLogic:
+    def __init__(self, board):
+        self.cityMap = GameLogic.mapCities(board)
+
+    def mapCities(self, board):
+        return 
+
+    def buildCity(self, player):
+        print("City Built")
+
+    def rollDice(self, board, player):
+        dieResult = random.randint(2,12) #Roll 2 dice
+        print(f'Die Result: {dieResult}') #Debug checking
+        for tile in board.boardMap:
+            if tile.dieNumber == dieResult:
+                player.resources[tile.resource] += 1 #Give players one resource for 
+                continue
+
+
+#Contains Resource Tile data. (ID, Die Number Medallion, Resource Produced, and Title)
 class Tile:
-    corner = ["0"] * 6
-    side = ["-"] * 6
     id = 0
     dieNumber = 0
     resource = ""
@@ -12,19 +32,8 @@ class Tile:
         self.id = id
         self.dieNumber = dieNumber
         self.title = title
-        self.corner = Tile.corner
-        self.side = Tile.side
-        self.side[5] = '/'
-        self.side[1] = '\\'
-        self.side[4] = '\\'
-        self.side[2] = '/'
 
-    def buildTown(self):
-        print("Town Build")
-    def buildRoad(self):
-        print("Road Built")
-    def buildCity(self):
-        print("City Built")
+#Contains all visible data of the board. (The visible board, board generation, resources spread)
 class Board:
     resourceMap = {
         'Lumber': 4,
@@ -65,23 +74,28 @@ class Board:
             ' ', '/', '^', '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/', '^', '\\'
             ],
         'K': ['0', '+', '0', '-' * 5, '0', '+', '0', '-' * 5, '0', '+', '0'],
-        'L': [' ', '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', '\n',
+        'L': [
+              ' ', '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', '\n',
               ' ' * 2, '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/'
               ],
         'M': [' ' * 3, '0', '-' * 5, '0', '+', '0', '-' * 5, '0', '+', '0', '-' * 5, '0', ' ' * 2],
-        'N': [' ' * 2, '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '\n',
+        'N': [
+              ' ' * 2, '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '\n',
               ' ', '/', '^', '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/', '^', '\\'
               ],
         'O': ['0', '+', '0', '-' * 5, '0', '+', '0', '-' * 5, '0', '+', '0'],
-        'P': [' ', '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', '\n',
+        'P': [
+              ' ', '\\', '#', '/', ' ' * 7, '\\', '#', '/', ' ' * 7, '\\', '#', '/', '\n',
               ' ' * 2, '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/'
               ],
         'Q': [' ' * 3, '0', '-' * 5, '0', '+', '0', '-' * 5, '0', '+', '0', '-' * 5, '0', ' ' * 2],
-        'R': [' ' * 10, '\\', '#', '/', ' ' * 7, '\\', '#', '/',' \n',
+        'R': [
+              ' ' * 10, '\\', '#', '/', ' ' * 7, '\\', '#', '/',' \n',
               ' ' * 11, '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/'
               ],
         'S': [' ' * 12, '0', '-' * 5, '0', '+', '0', '-' * 5, '0'],
-        'T': [' ' * 19, '\\', '#', '/', '\n',
+        'T': [
+              ' ' * 19, '\\', '#', '/', '\n',
               ' ' * 20, '\\', ' ' * 7, '/'
               ],
         'U': [' ' * 21, '0', '-' * 5, '0', ' ' * 10]
@@ -114,7 +128,7 @@ class Board:
                     case 'Ore':
                         self.boardMap.append(Tile('Mountains', currentKey, index, currentDieNumber))
             index += 1
-        
+        self.gameLogic = GameLogic(self)
         Board.populateBoard(self)
     
     def resourceCheck(self, resource):
@@ -142,7 +156,6 @@ class Board:
                         break
                 if flag1 == 1 and flag2 == 1 and flag3 == 1:
                     break
-                        
 
     def printBoard(self):
         for Y in self.daBoard:
@@ -151,15 +164,8 @@ class Board:
                 rowString += X
             print(f'{rowString}')
 
-    def rollDice(self, player):
-        dieResult = random.randint(2,12)
-        print(f'Die Result: {dieResult}')
-        for tile in self.boardMap:
-            if tile.dieNumber == dieResult:
-                player.resources[tile.resource] += 1
-                continue
-
-class Player:#Player class which will keep track of the players resources, points, and action cards
+#Player class which will keep track of the players resources, points, and action cards
+class Player:
     resources = {
         'Lumber': 0,
         'Wool': 0,
@@ -168,8 +174,11 @@ class Player:#Player class which will keep track of the players resources, point
         'Ore': 0
     }
 
+    availableCities = 3
+
     def __inti__(self):
         self.resources = Player.resources
+        self.availableCities = Player.availableCities
 
     def printPlayer(self):
         for resource in self.resources:
@@ -180,12 +189,22 @@ board = Board()
 player = Player()
 userInput = ""
 
+#Setup Loop
+#while(userInput != "quit" or player.availableTowns != 0):
+#    userInput = input("""
+#                      Select where you would like to build a city.
+#                      Enter the tile ID (top number) followed by position:
+#                      Ex. 4-TL would place a town on tile 4 in the top left.
+#                      """)
+#    if(userInput != "quit"):
+#        board.buildCity()
+#Main Game Loop
 while(userInput != "quit"):
     board.printBoard()
     player.printPlayer()
     userInput = input("What would you like to do? quit to exit\n")
     if(userInput == "roll dice"):
-        board.rollDice(player)
+        board.gameLogic.rollDice(board, player)
 
 print("Thank you for playing!")
 
