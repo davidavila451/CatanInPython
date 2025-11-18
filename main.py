@@ -151,6 +151,14 @@ class Board:
                 rowString += X
             print(f'{rowString}')
 
+    def rollDice(self, player):
+        dieResult = random.randint(2,12)
+        print(f'Die Result: {dieResult}')
+        for tile in self.boardMap:
+            if tile.dieNumber == dieResult:
+                player.resources[tile.resource] += 1
+                continue
+
 class Player:#Player class which will keep track of the players resources, points, and action cards
     resources = {
         'Lumber': 0,
@@ -160,10 +168,27 @@ class Player:#Player class which will keep track of the players resources, point
         'Ore': 0
     }
 
+    def __inti__(self):
+        self.resources = Player.resources
+
+    def printPlayer(self):
+        for resource in self.resources:
+            print(f'{resource}: {self.resources[resource]}')
+
 #Start of main biz
 board = Board()
+player = Player()
+userInput = ""
 
-board.printBoard()
+while(userInput != "quit"):
+    board.printBoard()
+    player.printPlayer()
+    userInput = input("What would you like to do? quit to exit\n")
+    if(userInput == "roll dice"):
+        board.rollDice(player)
+
+print("Thank you for playing!")
+
 #print(
 #f"""   {board.boardMap[0].corner[0]}{board.boardMap[0].side[0]*5}{board.boardMap[0].corner[1]}   
 #  {board.boardMap[0].side[5]}{' '*7}{board.boardMap[0].side[1]}  
