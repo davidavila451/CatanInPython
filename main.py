@@ -2,15 +2,282 @@ import random
 
 #Handles all game logic. (Rolling dice, purchasing and placing cities/roads/cards)
 class GameLogic:
+    cityData = {
+        "A":{
+            1: {
+                "Status": "0",
+                "Locations": ["0-TL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["0-TR"]
+            }
+        },
+        "B":{
+            1: {
+                "Status": "0",
+                "Locations": ["1-TL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["1-TR", "0-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["2-TL", "0-CR"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["2-TR"]
+            }
+        },
+        "C":{
+            1: {
+                "Status": "0",
+                "Locations": ["3-TL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["3-TR", "1-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["4-TL", "1-CR", "0-BL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["4-TR", "2-CL", "0-BR"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["5-TL", "2-CR"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["5-TR"]
+            }
+        },
+        "D":{
+            1: {
+                "Status": "0",
+                "Locations": ["3-CL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["3-CR", "1-BL", "6-TL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["4-CL", "1-BR", "6-TR"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["4-CR", "2-BL", "7-TL"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["2-BR", "7-TR", "5-CL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["5-CR"]
+            }
+        },
+        "E":{
+            1: {
+                "Status": "0",
+                "Locations": ["3-BL", "8-TL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["3-BR", "8-TR", "6-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["6-CR", "4-BL", "9-TL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["4-BR", "9-TR", "7-CL"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["7-CR", "5-BL", "10-TL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["5-BR", "10-TR"]
+            }
+        },
+        "F":{
+            1: {
+                "Status": "0",
+                "Locations": ["8-CL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["8-CR", "6-BL", "11-TL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["6-BR", "11-TR", "9-CL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["9-CR", "7-BL", "12-TR"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["7-BR", "12-TR", "10-CL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["10-CR"]
+            }
+        },
+        "G":{
+            1: {
+                "Status": "0",
+                "Locations": ["8-BL", "13-TL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["8-BR", "13-TR", "11-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["11-CR", "9-BL", "14-TL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["9-BR", "14-TR", "12-CL"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["12-CR", "10-BL", "15-TL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["10-BR", "15-TR"]
+            }
+        },
+        "H":{
+            1: {
+                "Status": "0",
+                "Locations": ["13-CL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["13-CR", "16-TL", "11-BL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["11-BR", "16-TR", "14-CL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["14-CR", "12-BL", "17-TL"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["12-BR", "17-TR", "15-CL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["15-CR"]
+            }
+        },
+        "I":{
+            1: {
+                "Status": "0",
+                "Locations": ["13-BL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["13-BR", "16-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["16-CR", "14-BL", "18-TL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["14-BR", "18-TR", "17-CL"]
+            },
+            5: {
+                "Status": "0",
+                "Locations": ["17-CR", "15-BL"]
+            },
+            6: {
+                "Status": "0",
+                "Locations": ["15-BR"]
+            }
+        },
+        "J":{
+            1: {
+                "Status": "0",
+                "Locations": ["16-BL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["16-BR", "18-CL"]
+            },
+            3: {
+                "Status": "0",
+                "Locations": ["18-CR", "17-BL"]
+            },
+            4: {
+                "Status": "0",
+                "Locations": ["17-BR"]
+            }
+        },
+        "K":{
+            1: {
+                "Status": "0",
+                "Locations": ["18-BL"]
+            },
+            2: {
+                "Status": "0",
+                "Locations": ["18-BR"]
+            }
+        }
+    }
+
     def __init__(self, board):
-        self.cityMap = GameLogic.mapCities(board)
+        self.cityData = GameLogic.cityData
+        GameLogic.mapCities(self, board)
 
+    #Return a list of available cities and their position on the board in respect to tile IDs
     def mapCities(self, board):
-        return 
+        cityPositionList = []
+        i = 0
+        for Y in board.daBoard:
+            for index, X in enumerate(board.daBoard[Y]):
+                if X == '0' or X == 'x' or X == 'X':
+                    cityPositionList.append([index,Y])
+        for row in self.cityData:
+            for city in self.cityData[row]:
+                board.daBoard[cityPositionList[i][1]][cityPositionList[i][0]] = self.cityData[row][city]['Status']
+                i += 1
+        print("Cities mapped") 
 
-    def buildCity(self, player):
-        print("City Built")
+    #Search for a city that contains the proper ID and position sequence if NA return null
+    def buildCity(self, player, board, userInput):
+        flag = 0
 
+        for row in self.cityData:
+            for city in self.cityData[row]:
+                for location in self.cityData[row][city]['Locations']:
+                    if location == userInput:
+                        self.cityData[row][city]['Status'] = 'x'
+                        GameLogic.mapCities(self, board)
+                        player.availableCities -= 1
+                        print("City Built!")
+                        return
+        print("Invalid Coordinates: "+userInput+". Please try again.")
+        return
+
+    #Roll the dice for the player, return the resources for that die results
     def rollDice(self, board, player):
         dieResult = random.randint(2,12) #Roll 2 dice
         print(f'Die Result: {dieResult}') #Debug checking
@@ -190,14 +457,17 @@ player = Player()
 userInput = ""
 
 #Setup Loop
-#while(userInput != "quit" or player.availableTowns != 0):
-#    userInput = input("""
-#                      Select where you would like to build a city.
-#                      Enter the tile ID (top number) followed by position:
-#                      Ex. 4-TL would place a town on tile 4 in the top left.
-#                      """)
-#    if(userInput != "quit"):
-#        board.buildCity()
+while(userInput != "quit" and player.availableCities != 0):
+    board.printBoard()
+    userInput = input(f"""
+Select where you would like to build a city.
+Enter the tile ID (top number) followed by position:
+Ex. 4-TL would place a town on tile 4 in the top left.
+                      
+You have {str(player.availableCities)} left to place.
+""")
+    if(userInput != "quit"):
+        board.gameLogic.buildCity(player, board, userInput)
 #Main Game Loop
 while(userInput != "quit"):
     board.printBoard()
