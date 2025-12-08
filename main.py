@@ -263,8 +263,6 @@ class GameLogic:
 
     #Search for a city that contains the proper ID and position sequence if NA return null
     def buildTown(self, player, board, userInput):
-        flag = 0
-
         for row in self.cityData:
             for city in self.cityData[row]:
                 for location in self.cityData[row][city]['Locations']:
@@ -278,10 +276,32 @@ class GameLogic:
                             for location in self.cityData[row][city]['Locations']:    
                                 player.cityData['Towns'].append(location)
                             player.availableCities -= 1
-                            print("City Built!")
+                            print("Town Built!")
                             return
         print("Invalid Coordinates: "+userInput+". Please try again.")
         return
+
+    def buildCity(self, player, board, userInput):
+            for row in self.cityData:
+                for city in self.cityData[row]:
+                    for location in self.cityData[row][city]['Locations']:
+                        if location == userInput:
+                            if self.cityData[row][city]['Status'] != 'x':
+                                print("There is no town here!")
+                                return
+                            elif self.cityData[row][city]['Status'] == 'X':
+                                print("A city already exist here!")
+                                return
+                            else:
+                                self.cityData[row][city]['Status'] = 'X'
+                                GameLogic.mapCities(self, board)
+                                for location in self.cityData[row][city]['Locations']:    
+                                    player.cityData['Towns'].remove(location)
+                                    player.cityData['Cities'].append(location)
+                                print("City Built!")
+                                return
+            print("Invalid Coordinates: "+userInput+". Please try again.")
+            return
 
     #Roll the dice for the player, return the resources for that die results
     def rollDice(self, board, player):
@@ -293,12 +313,12 @@ class GameLogic:
                 for ownedTown in player.cityData['Towns']:
                     townLocation = ownedTown.split("-")
                     townID = townLocation[0]
-                    if townID == str(tile.id):
+                    if townID == str(tile.id) and tile.id != 9:
                         player.resources[tile.resource] += 1 #Give players one resource for town
                 for ownedCity in player.cityData['Cities']:
                     cityLocation = ownedCity.split("-")
                     cityID = cityLocation[0]
-                    if cityID == tile.id:
+                    if cityID == str(tile.id) and tile.id != 9:
                         player.resources[tile.resource] += 2 #Give players two resource for city
                 continue
 
@@ -497,10 +517,16 @@ while(userInput != "quit"):
     userInput = input("""
 What would you like to do?
 1. roll - Roll the dice and collect your resources
-2. quit - Exit the game
+2. upgrade town - Upgrade a town you currently own to a city
+3. quit - Exit the game
 """)
     if(userInput == "roll"):
         board.gameLogic.rollDice(board, player)
+    elif(userInput == 'upgrade town'):
+        userInput = input("What town would you like to upgrade?")
+        board.gameLogic.buildCity(player, board, userInput)
+    else:
+        print(f"Invalid input: {userInput}. Please try again.")
 
 print("Thank you for playing!")
 
