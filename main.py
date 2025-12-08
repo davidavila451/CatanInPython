@@ -2,6 +2,266 @@ import random
 
 #Handles all game logic. (Rolling dice, purchasing and placing cities/roads/cards)
 class GameLogic:
+    roadData = {
+        "A": {
+            1: {
+                "Status": '-'
+            }
+        },
+        "B": {
+            1: {
+                "Status": '/'
+            },
+            2: {
+                "Status": '\\'
+            }
+        },
+        "C": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            }
+        },
+        "D": {
+            1: {
+                "Status": '/'
+            },
+            2: {
+                "Status": '\\'
+            },
+            3: {
+                "Status": '/'
+            },
+            4: {
+                "Status": '\\'
+            }
+        },
+        "E": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            },
+            3: {
+                "Status": '-'
+            }
+        },
+        "F": {
+            1: {
+                "Status": '/'
+            },
+            2: {
+                "Status": '\\'
+            },
+            3: {
+                "Status": '/'
+            },
+            4: {
+                "Status": '\\'
+            },
+            5: {
+                "Status": '/'
+            },
+            6: {
+                "Status": '\\'
+            }
+        },
+        "G": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            }
+        },
+        "H": {
+            1: {
+                "Status": '\\'
+            },
+            2: {
+                "Status": '/'
+            },
+            3: {
+                "Status": '\\'
+            },
+            4: {
+                "Status": '/'
+            },
+            5: {
+                "Status": '\\'
+            },
+            6: {
+                "Status": '/'
+            }
+        },
+        "I": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            },
+            3: {
+                "Status": '-'
+            }
+        },
+        "J": {
+            1: {
+                "Status": '/'
+            },
+            2: {
+                "Status": '\\'
+            },
+            3: {
+                "Status": '/'
+            },
+            4: {
+                "Status": '\\'
+            },
+            5: {
+                "Status": '/'
+            },
+            6: {
+                "Status": '\\'
+            }
+        },
+        "K": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            }
+        },
+        "L": {
+            1: {
+                "Status": '\\'
+            },
+            2: {
+                "Status": '/'
+            },
+            3: {
+                "Status": '\\'
+            },
+            4: {
+                "Status": '/'
+            },
+            5: {
+                "Status": '\\'
+            },
+            6: {
+                "Status": '/'
+            }
+        },
+        "M": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            },
+            3: {
+                "Status": '-'
+            }
+        },
+        "N": {
+            1: {
+                "Status": '/'
+            },
+            2: {
+                "Status": '\\'
+            },
+            3: {
+                "Status": '/'
+            },
+            4: {
+                "Status": '\\'
+            },
+            5: {
+                "Status": '/'
+            },
+            6: {
+                "Status": '\\'
+            }
+        },
+        "O": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            }
+        },
+        "P": {
+            1: {
+                "Status": '\\'
+            },
+            2: {
+                "Status": '/'
+            },
+            3: {
+                "Status": '\\'
+            },
+            4: {
+                "Status": '/'
+            },
+            5: {
+                "Status": '\\'
+            },
+            6: {
+                "Status": '/'
+            }
+        },
+        "Q": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            },
+            3: {
+                "Status": '-'
+            }
+        },
+        "R": {
+            1: {
+                "Status": '\\'
+            },
+            2: {
+                "Status": '/'
+            },
+            3: {
+                "Status": '\\'
+            },
+            4: {
+                "Status": '/'
+            }
+        },
+        "S": {
+            1: {
+                "Status": '-'
+            },
+            2: {
+                "Status": '-'
+            }
+        },
+        "T": {
+            1: {
+                "Status": '\\'
+            },
+            2: {
+                "Status": '/'
+            }
+        },
+        "U": {
+            1: {
+                "Status": '-'
+            }
+        }
+    }
     cityData = {
         "A":{
             1: {
