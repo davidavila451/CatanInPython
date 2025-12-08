@@ -262,18 +262,24 @@ class GameLogic:
         print("Cities mapped") 
 
     #Search for a city that contains the proper ID and position sequence if NA return null
-    def buildCity(self, player, board, userInput):
+    def buildTown(self, player, board, userInput):
         flag = 0
 
         for row in self.cityData:
             for city in self.cityData[row]:
                 for location in self.cityData[row][city]['Locations']:
                     if location == userInput:
-                        self.cityData[row][city]['Status'] = 'x'
-                        GameLogic.mapCities(self, board)
-                        player.availableCities -= 1
-                        print("City Built!")
-                        return
+                        if self.cityData[row][city]['Status'] != '0':
+                            print("A town already exist here!")
+                            return
+                        else:
+                            self.cityData[row][city]['Status'] = 'x'
+                            GameLogic.mapCities(self, board)
+                            for location in self.cityData[row][city]['Locations']:    
+                                player.cityData['Towns'].append(location)
+                            player.availableCities -= 1
+                            print("City Built!")
+                            return
         print("Invalid Coordinates: "+userInput+". Please try again.")
         return
 
@@ -283,7 +289,17 @@ class GameLogic:
         print(f'Die Result: {dieResult}') #Debug checking
         for tile in board.boardMap:
             if tile.dieNumber == dieResult:
-                player.resources[tile.resource] += 1 #Give players one resource for 
+                #Check to see if player has any towns or cities on this tile
+                for ownedTown in player.cityData['Towns']:
+                    townLocation = ownedTown.split("-")
+                    townID = townLocation[0]
+                    if townID == str(tile.id):
+                        player.resources[tile.resource] += 1 #Give players one resource for town
+                for ownedCity in player.cityData['Cities']:
+                    cityLocation = ownedCity.split("-")
+                    cityID = cityLocation[0]
+                    if cityID == tile.id:
+                        player.resources[tile.resource] += 2 #Give players two resource for city
                 continue
 
 
@@ -443,9 +459,15 @@ class Player:
 
     availableCities = 3
 
+    cityData = {
+        'Towns': [],
+        'Cities': []
+    }
+
     def __inti__(self):
         self.resources = Player.resources
         self.availableCities = Player.availableCities
+        self.cityData = Player.cityData
 
     def printPlayer(self):
         for resource in self.resources:
@@ -467,13 +489,17 @@ Ex. 4-TL would place a town on tile 4 in the top left.
 You have {str(player.availableCities)} left to place.
 """)
     if(userInput != "quit"):
-        board.gameLogic.buildCity(player, board, userInput)
+        board.gameLogic.buildTown(player, board, userInput)
 #Main Game Loop
 while(userInput != "quit"):
     board.printBoard()
     player.printPlayer()
-    userInput = input("What would you like to do? quit to exit\n")
-    if(userInput == "roll dice"):
+    userInput = input("""
+What would you like to do?
+1. roll - Roll the dice and collect your resources
+2. quit - Exit the game
+""")
+    if(userInput == "roll"):
         board.gameLogic.rollDice(board, player)
 
 print("Thank you for playing!")
