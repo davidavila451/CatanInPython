@@ -1,264 +1,343 @@
 import random
+import re
+
+RED = "\x1b[31m"
+GREEN = "\x1b[32m"
+BLUE = "\x1b[34m"
+MAG = "\x1b[35m"
+RESET = "\x1b[0m"
 
 #Handles all game logic. (Rolling dice, purchasing and placing cities/roads/cards)
 class GameLogic:
     roadData = {
         "A": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["A1", "A2"]
             }
         },
         "B": {
             1: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["A1", "B2"]
             },
             2: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["A2", "B3"]
             }
         },
         "C": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["B1", "B2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["B3", "B4"]
             }
         },
         "D": {
             1: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["B1", "C2"]
             },
             2: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["B2", "C3"]
             },
             3: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["B3", "C4"]
             },
             4: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["B4", "C5"]
             }
         },
         "E": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["C1", "C2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["C3", "C4"]
             },
             3: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["C5", "C6"]
             }
         },
         "F": {
             1: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["C1", "D1"]
             },
             2: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["C2", "D2"]
             },
             3: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["C3", "D3"]
             },
             4: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["C4", "D4"]
             },
             5: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["C5", "D5"]
             },
             6: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["C6", "D6"]
             }
         },
         "G": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["D2", "D3"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Locations": ["D4", "D5"]
             }
         },
         "H": {
             1: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["D1", "E1"]
             },
             2: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["D2", "E2"]
             },
             3: {
-                "Status": '\\'
+                "Status": '\\',
+                "Locations": ["D3", "E3"]
             },
             4: {
-                "Status": '/'
+                "Status": '/',
+                "Locations": ["D4", "E4"]
             },
             5: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["D5", "E5"]
             },
             6: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["D6", "E6"]
             }
         },
         "I": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["E1", "E2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["E3", "E4"]
             },
             3: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["E5", "E6"]
             }
         },
         "J": {
             1: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["E1", "F1"]
             },
             2: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["E2", "F2"]
             },
             3: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["E3", "F3"]
             },
             4: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["E4", "F4"]
             },
             5: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["E5", "F5"]
             },
             6: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["E6", "F6"]
             }
         },
         "K": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["F2", "F3"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["F4", "F5"]
             }
         },
         "L": {
             1: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["F1", "G1"]
             },
             2: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["F2", "G2"]
             },
             3: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["F3", "G3"]
             },
             4: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["F4", "G4"]
             },
             5: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["F5", "G5"]
             },
             6: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["F6", "G6"]
             }
         },
         "M": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["G1", "G2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["G3", "G4"]
             },
             3: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["G5", "G6"]
             }
         },
         "N": {
             1: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["G1", "H1"]
             },
             2: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["G2", "H2"]
             },
             3: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["G3", "H3"]
             },
             4: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["G4", "H4"]
             },
             5: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["G5", "H5"]
             },
             6: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["G6", "H6"]
             }
         },
         "O": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["H2", "H3"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["H4", "H5"]
             }
         },
         "P": {
             1: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["H1", "I1"]
             },
             2: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["H2", "I2"]
             },
             3: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["H3", "I3"]
             },
             4: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["H4", "I4"]
             },
             5: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["H5", "I5"]
             },
             6: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["H6", "I6"]
             }
         },
         "Q": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["I1", "I2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["I3", "I4"]
             },
             3: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["I5", "I6"]
             }
         },
         "R": {
             1: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["I2", "J1"]
             },
             2: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["I3", "J2"]
             },
             3: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["I4", "J3"]
             },
             4: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["I5", "J4"]
             }
         },
         "S": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["J1", "J2"]
             },
             2: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["J3", "J4"]
             }
         },
         "T": {
             1: {
-                "Status": '\\'
+                "Status": '\\',
+                "Connections": ["J2", "K1"]
             },
             2: {
-                "Status": '/'
+                "Status": '/',
+                "Connections": ["J3", "K2"]
             }
         },
         "U": {
             1: {
-                "Status": '-'
+                "Status": '-',
+                "Connections": ["K1", "K2"]
             }
         }
     }
@@ -506,6 +585,7 @@ class GameLogic:
     def __init__(self, board):
         self.cityData = GameLogic.cityData
         GameLogic.mapCities(self, board)
+        GameLogic.mapRoads(self, board)
 
     #Return a list of available cities and their position on the board in respect to tile IDs
     def mapCities(self, board):
@@ -513,13 +593,32 @@ class GameLogic:
         i = 0
         for Y in board.daBoard:
             for index, X in enumerate(board.daBoard[Y]):
-                if X == '0' or X == 'x' or X == 'X':
+                if X == '0' or re.search('^\\x1b\[3[1-5]m[xX]\\x1b\[0m$',X):
                     cityPositionList.append([index,Y])
         for row in self.cityData:
             for city in self.cityData[row]:
+                print(cityPositionList)
+                print(i)
+                print(self.cityData)
                 board.daBoard[cityPositionList[i][1]][cityPositionList[i][0]] = self.cityData[row][city]['Status']
                 i += 1
-        print("Cities mapped") 
+        print("Towns/Cities mapped") 
+    def mapRoads(self, board):
+        roadPositionList = []
+        i = 1
+        for Y in board.daBoard:
+            for index, X in enumerate(board.daBoard[Y]):
+                if re.search("(-+)",X) or X == '/' or X == '\\':
+                    roadPositionList.append([index, Y, i])
+                    i += 1
+                if re.search("^\n",X):
+                    i = 1
+            i = 1
+        for entry in roadPositionList:
+            if self.roadData[entry[1]][entry[2]]['Status'] != "/" and self.roadData[entry[1]][entry[2]]['Status'] != "\\":
+                board.daBoard[entry[1]][entry[0]] = self.roadData[entry[1]][entry[2]]['Status'] * 5
+            else:
+                board.daBoard[entry[1]][entry[0]] = self.roadData[entry[1]][entry[2]]['Status']
 
     #Search for a city that contains the proper ID and position sequence if NA return null
     def buildTown(self, player, board, userInput):
@@ -527,11 +626,14 @@ class GameLogic:
             for city in self.cityData[row]:
                 for location in self.cityData[row][city]['Locations']:
                     if location == userInput:
-                        if self.cityData[row][city]['Status'] != '0':
+                        if re.search('^\\x1b\[3[1-5]mx\\x1b\[0m$',self.cityData[row][city]['Status']):
                             print("A town already exist here!")
                             return
+                        elif re.search('^\\x1b\[3[1-5]mX\\x1b\[0m$',self.cityData[row][city]['Status']):
+                            print("A city already exist here!")
+                            return
                         else:
-                            self.cityData[row][city]['Status'] = 'x'
+                            self.cityData[row][city]['Status'] = f'{RED}x{RESET}'
                             GameLogic.mapCities(self, board)
                             for location in self.cityData[row][city]['Locations']:    
                                 player.cityData['Towns'].append(location)
@@ -546,19 +648,19 @@ class GameLogic:
                 for city in self.cityData[row]:
                     for location in self.cityData[row][city]['Locations']:
                         if location == userInput:
-                            if self.cityData[row][city]['Status'] != 'x':
-                                print("There is no town here!")
-                                return
-                            elif self.cityData[row][city]['Status'] == 'X':
-                                print("A city already exist here!")
-                                return
-                            else:
-                                self.cityData[row][city]['Status'] = 'X'
+                            if re.search('^\\x1b\[3[1-5]mx\\x1b\[0m$',self.cityData[row][city]['Status']):
+                                self.cityData[row][city]['Status'] = f'{RED}X{RESET}'
                                 GameLogic.mapCities(self, board)
                                 for location in self.cityData[row][city]['Locations']:    
                                     player.cityData['Towns'].remove(location)
                                     player.cityData['Cities'].append(location)
                                 print("City Built!")
+                                return
+                            elif re.search('^\\x1b\[3[1-5]mX\\x1b\[0m$',self.cityData[row][city]['Status']):
+                                print("A city already exist here!")
+                                return
+                            else:
+                                print("There is no town here!")
                                 return
             print("Invalid Coordinates: "+userInput+". Please try again.")
             return
@@ -653,7 +755,7 @@ class Board:
               ],
         'Q': [' ' * 3, '0', '-' * 5, '0', '+', '0', '-' * 5, '0', '+', '0', '-' * 5, '0', ' ' * 2],
         'R': [
-              ' ' * 10, '\\', '#', '/', ' ' * 7, '\\', '#', '/',' \n',
+              ' ' * 10, '\\', '#', '/', ' ' * 7, '\\', '#', '/', '\n',
               ' ' * 11, '\\', ' ' * 7, '/', '^', '\\', ' ' * 7, '/'
               ],
         'S': [' ' * 12, '0', '-' * 5, '0', '+', '0', '-' * 5, '0'],
@@ -736,6 +838,8 @@ class Player:
         'Brick': 0,
         'Ore': 0
     }
+
+    color = RED
 
     availableCities = 3
 
