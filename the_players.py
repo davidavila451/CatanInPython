@@ -16,12 +16,17 @@ class Player:
 
     color = RED
 
-    availableCities = 3
+    availableCities = 2
+    availableRoads = 2
+
+    currentPoints = 0
 
     cityData = {
         'Towns': [],
         'Cities': []
     }
+
+    roadData = []
 
     def __inti__(self):
         self.resources = Player.resources
@@ -29,5 +34,19 @@ class Player:
         self.cityData = Player.cityData
 
     def printPlayer(self):
+        if(self.currentPoints > 9):
+            pointsNumLen = 2
+        else:
+            pointsNumLen = 1
+
+        print("|-------------------|-------------------|")
+        print(f"| RESOURCES:        |POINTS: {self.currentPoints}{' '*(11-pointsNumLen)}|")
         for resource in self.resources:
-            print(f'{resource}: {self.resources[resource]}')
+            if(self.resources[resource] > 9):
+                resourceNumLen = 2
+            else:
+                resourceNumLen = 1
+
+            print(f'| {resource}: {self.resources[resource]}{' '*(16-(len(resource)+resourceNumLen))}| {' '*(19-pointsNumLen)}|')
+
+        print("|-------------------|-------------------|")

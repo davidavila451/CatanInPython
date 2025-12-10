@@ -583,42 +583,10 @@ cityData = {
 #Handles all game logic. (Rolling dice, purchasing and placing cities/roads/cards)
 class GameLogic:
     def __init__(self, board):
-        self.cityData = GameLogic.cityData
-        GameLogic.mapCities(self, board)
-        GameLogic.mapRoads(self, board)
-
-    #Return a list of available cities and their position on the board in respect to tile IDs
-    def mapCities(self, board):
-        cityPositionList = []
-        i = 0
-        for Y in board.daBoard:
-            for index, X in enumerate(board.daBoard[Y]):
-                if X == '0' or re.search('^\\x1b\[3[1-5]m[xX]\\x1b\[0m$',X):
-                    cityPositionList.append([index,Y])
-        for row in self.cityData:
-            for city in self.cityData[row]:
-                print(cityPositionList)
-                print(i)
-                print(self.cityData)
-                board.daBoard[cityPositionList[i][1]][cityPositionList[i][0]] = self.cityData[row][city]['Status']
-                i += 1
-        print("Towns/Cities mapped") 
-    def mapRoads(self, board):
-        roadPositionList = []
-        i = 1
-        for Y in board.daBoard:
-            for index, X in enumerate(board.daBoard[Y]):
-                if re.search("(-+)",X) or X == '/' or X == '\\':
-                    roadPositionList.append([index, Y, i])
-                    i += 1
-                if re.search("^\n",X):
-                    i = 1
-            i = 1
-        for entry in roadPositionList:
-            if self.roadData[entry[1]][entry[2]]['Status'] != "/" and self.roadData[entry[1]][entry[2]]['Status'] != "\\":
-                board.daBoard[entry[1]][entry[0]] = self.roadData[entry[1]][entry[2]]['Status'] * 5
-            else:
-                board.daBoard[entry[1]][entry[0]] = self.roadData[entry[1]][entry[2]]['Status']
+        self.cityData = cityData
+        self.roadData = roadData
+        board.daBoard = updateCities(self.cityData, board.daBoard)
+        updateRoads(self.roadData, board.daBoard)
 
     #Search for a city that contains the proper ID and position sequence if NA return null
     def buildTown(self, player, board, userInput):
@@ -626,45 +594,82 @@ class GameLogic:
             for city in self.cityData[row]:
                 for location in self.cityData[row][city]['Locations']:
                     if location == userInput:
-                        if re.search('^\\x1b\[3[1-5]mx\\x1b\[0m$',self.cityData[row][city]['Status']):
+                        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
                             print("A town already exist here!")
-                            return
-                        elif re.search('^\\x1b\[3[1-5]mX\\x1b\[0m$',self.cityData[row][city]['Status']):
+                            return -1
+                        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
                             print("A city already exist here!")
-                            return
+                            return -1
                         else:
                             self.cityData[row][city]['Status'] = f'{RED}x{RESET}'
-                            GameLogic.mapCities(self, board)
+                            board.daBoard = updateCities(self.cityData, board.daBoard)
                             for location in self.cityData[row][city]['Locations']:    
                                 player.cityData['Towns'].append(location)
                             player.availableCities -= 1
+                            player.currentPoints += 1
                             print("Town Built!")
-                            return
+                            return 0
         print("Invalid Coordinates: "+userInput+". Please try again.")
-        return
+        return -1
 
     def buildCity(self, player, board, userInput):
             for row in self.cityData:
                 for city in self.cityData[row]:
                     for location in self.cityData[row][city]['Locations']:
                         if location == userInput:
-                            if re.search('^\\x1b\[3[1-5]mx\\x1b\[0m$',self.cityData[row][city]['Status']):
+                            if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
                                 self.cityData[row][city]['Status'] = f'{RED}X{RESET}'
-                                GameLogic.mapCities(self, board)
+                                board.daBoard = updateCities(self.cityData, board.daBoard)
                                 for location in self.cityData[row][city]['Locations']:    
                                     player.cityData['Towns'].remove(location)
                                     player.cityData['Cities'].append(location)
+                                player.currentPoints += 1
                                 print("City Built!")
-                                return
-                            elif re.search('^\\x1b\[3[1-5]mX\\x1b\[0m$',self.cityData[row][city]['Status']):
+                                return 0
+                            elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
                                 print("A city already exist here!")
-                                return
+                                return -1
                             else:
                                 print("There is no town here!")
-                                return
+                                return -1
             print("Invalid Coordinates: "+userInput+". Please try again.")
-            return
+            return -1
 
+    def buildRoad(self, player, board, userInput, previousPoint):
+        #Fetch the points
+        previousPointConnection = coordsToCityPos(previousPoint, self.cityData)
+        userInputConnection = coordsToCityPos(userInput, self.cityData)
+        #Built the road
+        for row in self.roadData:
+            for road in self.roadData[row]:
+                if (userInputConnection in roadData[row][road]["Connections"]) and (previousPointConnection in roadData[row][road]["Connections"]):
+                    if re.search(r'^\x1b\[3[1-5]m[-\\/]\x1b\[0m$',self.roadData[row][road]['Status']):
+                        print("A road already exist here!")
+                        return -1
+                    else:
+                        self.roadData[row][road]['Status'] = f'{RED}{self.roadData[row][road]['Status']}{RESET}'
+                        board.daBoard = updateRoads(self.roadData, board.daBoard)    
+                        player.roadData.append([row,road])
+                        player.availableRoads -= 1
+                        print("Road Built!")
+                        return 0
+        print("Invalid Coordinates: "+userInput+". Please try again.")
+        return -1
+
+    def buildNewTown(self, player, board, userInput):
+        userInputConnection = coordsToCityPos(userInput, self.cityData)
+        if userInputConnection != -1:
+            for road in player.roadData:
+                if userInputConnection in self.roadData[road[0]][road[1]]['Connections']:
+                    GameLogic.buildTown(self, player, board, userInput)
+                    return 0
+        print("Invalid Coordinates: "+userInput+". Please try again")
+        return -1
+    
+    def buildNewRoad(self, player, board, userInput):
+        userInputTokens = userInput.split("/")
+        return GameLogic.buildRoad(self, player, board, userInputTokens[1], userInputTokens[0])
+    
     #Roll the dice for the player, return the resources for that die results
     def rollDice(self, board, player):
         dieResult = random.randint(2,12) #Roll 2 dice
@@ -683,3 +688,58 @@ class GameLogic:
                     if cityID == str(tile.id) and tile.id != 9:
                         player.resources[tile.resource] += 2 #Give players two resource for city
                 continue
+        return 0
+
+#Seperate Functions
+#Return a list of available cities and their position on the board in respect to tile IDs
+def mapCities(board):
+    cityPositionList = []
+    for Y in board:
+        for index, X in enumerate(board[Y]):
+            if X == '0' or re.search(r'^\x1b\[3[1-5]m[xX]\x1b\[0m$',X):
+                cityPositionList.append([index,Y])
+    print("Town/Cities mapped")
+    return cityPositionList
+
+def updateCities(data, board):
+    cityPositionList = mapCities(board)
+    i = 0
+    for row in data:
+        for city in data[row]:
+            board[cityPositionList[i][1]][cityPositionList[i][0]] = data[row][city]['Status']
+            i += 1
+    print("Towns/Cities updated")
+    return board
+
+def mapRoads(board):
+    roadPositionList = []
+    i = 1
+    for Y in board:
+        for index, X in enumerate(board[Y]):
+            if re.search(r'(-+)',X) or X == '/' or X == '\\' or re.search(r'^\x1b\[3[1-5]m[\\/-]\x1b\[0m$', X):
+                roadPositionList.append([index, Y, i])
+                i += 1
+            if re.search(r'^\n',X):
+                i = 1
+        i = 1
+    print("Roads mapped")
+    return roadPositionList
+    
+
+def updateRoads(data, board):
+    roadPositionList = mapRoads(board)
+    for entry in roadPositionList:
+        if re.search(r'^\x1b\[3[1-5]m[\\/]\x1b\[0m$', data[entry[1]][entry[2]]['Status']):
+            board[entry[1]][entry[0]] = data[entry[1]][entry[2]]['Status']
+        elif data[entry[1]][entry[2]]['Status'] != "/" and data[entry[1]][entry[2]]['Status'] != "\\":
+            board[entry[1]][entry[0]] = data[entry[1]][entry[2]]['Status'] * 5
+        else:
+            board[entry[1]][entry[0]] = data[entry[1]][entry[2]]['Status']
+    return board
+
+def coordsToCityPos(userInput, data):
+    for row in data:
+        for city in data[row]:
+            if userInput in data[row][city]["Locations"]:
+                return f'{row}{city}'
+    return -1

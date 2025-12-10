@@ -7,47 +7,78 @@ player = the_players.Player()
 userInput = ""
 
 #Setup Loop
-while(userInput != "quit" and player.availableCities != 0):
-    table.printBoard()
-    userInput = input(f"""
+while(userInput != "quit" and (player.availableCities > 0 or player.availableRoads > 0)):
+    #Build town
+    if(player.availableCities > 0):
+        table.printBoard()
+        clearFlagA = -1
+        while clearFlagA != 0:
+            userInput = input(f"""
 Select where you would like to build a city.
 Enter the tile ID (top number) followed by position:
-Ex. 4-TL would place a town on tile 4 in the top left.
-                      
+Ex. 4-TL would place a town on tile 4 in the (T)op (L)eft.
+                        
 You have {str(player.availableCities)} left to place.
 """)
-    if(userInput != "quit"):
-        table.gameLogic.buildTown(player, table, userInput)
+            if(userInput == "quit"):
+                quit()
+            previousPoint = userInput
+            clearFlagA = table.gameLogic.buildTown(player, table, userInput)
+
+    #Build road
+    if(player.availableRoads > 0):
+        table.printBoard()
+        clearFlagB = -1
+        while clearFlagB != 0:
+            userInput = input(f"""
+Select the point you would like to build your road to
+from the town you just built.
+Enter the tile ID (top number) followed by position:
+Ex. 4-TR would place a road to tile (4) in the (T)op (R)ight.
+                    
+You have {str(player.availableRoads)} left to place.
+""")
+            if(userInput == "quit"):
+                quit()
+            clearFlagB = table.gameLogic.buildRoad(player, table, userInput, previousPoint)
+
 #Main Game Loop
-while(userInput != "quit"):
-    table.printBoard()
-    player.printPlayer()
+returnFlag = 0
+while(userInput != 5 or userInput != "quit" ):
+    if returnFlag == 0:
+        table.printBoard()
+        player.printPlayer()
     userInput = input("""
 What would you like to do?
-1. roll - Roll the dice and collect your resources
-2. upgrade town - Upgrade a town you currently own to a city
-3. quit - Exit the game
+1. Roll the dice and collect your resources
+2. Upgrade a town you currently own to a city
+3. Build a town
+4. Build a road
+5. Exit the game
 """)
-    if(userInput == "roll"):
-        table.gameLogic.rollDice(table, player)
-    elif(userInput == 'upgrade town'):
-        userInput = input("What town would you like to upgrade?")
-        table.gameLogic.buildCity(player, table, userInput)
-    else:
-        print(f"Invalid input: {userInput}. Please try again.")
-
-print("Thank you for playing!")
-
-#print(
-#f"""   {board.boardMap[0].corner[0]}{board.boardMap[0].side[0]*5}{board.boardMap[0].corner[1]}   
-#  {board.boardMap[0].side[5]}{' '*7}{board.boardMap[0].side[1]}  
-# {board.boardMap[0].side[5]}{' '*9}{board.boardMap[0].side[1]} 
-#{board.boardMap[0].corner[5]}{' '*((11-len(board.boardMap[0].title))//2)}{board.boardMap[0].title}{' '*(((11-len(board.boardMap[0].title))//2)+((11-len(board.boardMap[0].title))%2))}{board.boardMap[0].corner[2]}
-# {board.boardMap[0].side[4]}{' '*(4-(board.boardMap[0].id//10))}{board.boardMap[0].id}{' '*4}{board.boardMap[0].side[2]} 
-# {board.boardMap[0].side[4]}{' '*7}{board.boardMap[0].side[2]}  
-#   {board.boardMap[0].corner[4]}{board.boardMap[0].side[3]*5}{board.boardMap[0].corner[3]}   
-#""")
-#print(board.boardMap[0].id)
-#print(board.boardMap[0].resource)
-#print(board.boardMap[6].id)
-#print(board.boardMap[6].resource)
+    match userInput:
+        case '1':
+            returnFlag = table.gameLogic.rollDice(table, player)
+        case '2':
+            userInput = input("What town would you like to upgrade?\n")
+            returnFlag = table.gameLogic.buildCity(player, table, userInput)
+        case '3':
+            userInput = input("Where would you like to build a new town?\n")
+            returnFlag = table.gameLogic.buildNewTown(player, table, userInput)
+        case '4':
+            userInput = input("""
+Where would you like to build a new road?
+Enter the starting and ending points as shown
+Ex. 4-TL/4-TR would build a road from
+tile 4 Top Left to tile 4 Top Right
+""")
+            returnFlag = table.gameLogic.buildNewRoad(player, table, userInput)
+        case '5':
+            print("Thank you for playing!")
+            quit()
+        case 'quit':
+            print("Thank you for playing!")
+            quit()
+        case _:
+            print(f"Invalid input: {userInput}. Please try again.\n")
+            returnFlag = -1
