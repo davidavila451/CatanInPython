@@ -1,6 +1,8 @@
 import random
 import the_rules
 
+STRIKETHROUGH = '\033[9m'
+END_FORMAT = '\033[0m'
 #Contains Resource Tile data. (ID, Die Number Medallion, Resource Produced, and Title)
 class Tile:
     id = 0
@@ -13,6 +15,8 @@ class Tile:
         self.id = id
         self.dieNumber = dieNumber
         self.title = title
+        self.titleLoc = []
+        self.gk = False
 
 #Contains all visible data of the board. (The visible board, board generation, resources spread)
 class Board:
@@ -129,6 +133,7 @@ class Board:
                         flag1 = 1
                     if X == '+' and flag2 != 1:
                         self.daBoard[Y][index] = ' '*((11-len(resource.title))//2)+resource.title+' '*(((11-len(resource.title))//2)+((11-len(resource.title))%2))
+                        resource.titleLoc = [Y,index]
                         flag2 = 1
                     if X == '#' and flag3 != 1:
                         self.daBoard[Y][index] = ' '*(4-(resource.dieNumber//10))+str(resource.dieNumber)+' '*4
@@ -144,3 +149,41 @@ class Board:
             for X in self.daBoard[Y]:
                 rowString += X
             print(f'{rowString}')
+
+    def moveGK(self, userInput):
+        #Get previous tile
+        for tile in self.boardMap:
+            if tile.gk == True:
+                tile.gk == False
+                match tile.resource:
+                    case 'Lumber':
+                        tile.title = f'{' '*((11-len('Forest'))//2)}Forest{' '*(((11-len('Forest'))//2)+((11-len('Forest'))%2))}'
+                    case 'Wool':
+                        tile.title = f'{' '*((11-len('Pasture'))//2)}Pasture{' '*(((11-len('Pasture'))//2)+((11-len('Pasture'))%2))}'
+                    case 'Grain':
+                        tile.title = f'{' '*((11-len('Fields'))//2)}Fields{' '*(((11-len('Fields'))//2)+((11-len('Fields'))%2))}'
+                    case 'Brick':
+                        tile.title = f'{' '*((11-len('Hills'))//2)}Hills{' '*(((11-len('Hills'))//2)+((11-len('Hills'))%2))}'
+                    case 'Ore':
+                        tile.title = f'{' '*((11-len('Mountains'))//2)}Mountains{' '*(((11-len('Mountains'))//2)+((11-len('Mountains'))%2))}'
+                self.daBoard[tile.titleLoc[0]][tile.titleLoc[1]] = tile.title
+
+        #Move to new tile
+        for tile in self.boardMap:
+            if str(tile.id) == userInput:
+                tile.gk = True
+                match tile.resource:
+                    case 'Lumber':
+                        tile.title = f'{' '*((11-len('Forest'))//2)}{STRIKETHROUGH}Forest{END_FORMAT}{' '*(((11-len('Forest'))//2)+((11-len('Forest'))%2))}'
+                    case 'Wool':
+                        tile.title = f'{' '*((11-len('Pasture'))//2)}{STRIKETHROUGH}Pasture{END_FORMAT}{' '*(((11-len('Pasture'))//2)+((11-len('Pasture'))%2))}'
+                    case 'Grain':
+                        tile.title = f'{' '*((11-len('Fields'))//2)}{STRIKETHROUGH}Fields{END_FORMAT}{' '*(((11-len('Fields'))//2)+((11-len('Fields'))%2))}'
+                    case 'Brick':
+                        tile.title = f'{' '*((11-len('Hills'))//2)}{STRIKETHROUGH}Hills{END_FORMAT}{' '*(((11-len('Hills'))//2)+((11-len('Hills'))%2))}'
+                    case 'Ore':
+                        tile.title = f'{' '*((11-len('Mountains'))//2)}{STRIKETHROUGH}Mountains{END_FORMAT}{' '*(((11-len('Mountains'))//2)+((11-len('Mountains'))%2))}'
+                self.daBoard[tile.titleLoc[0]][tile.titleLoc[1]] = tile.title
+                return 0
+        print(f"Invalid tile ID: {userInput}.")
+        return -1

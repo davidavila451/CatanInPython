@@ -1,8 +1,10 @@
 import the_table
 import the_players
+import card_magic
 
 #Start of main biz
 table = the_table.Board()
+cards = card_magic.Deck()
 player = the_players.Player()
 userInput = ""
 
@@ -47,14 +49,16 @@ returnFlag = 0
 while(userInput != 5 or userInput != "quit" ):
     if returnFlag == 0:
         table.printBoard()
-        player.printPlayer()
+    player.printPlayer()
     userInput = input("""
 What would you like to do?
 1. Roll the dice and collect your resources
 2. Upgrade a town you currently own to a city
 3. Build a town
 4. Build a road
-5. Exit the game
+5. Purchase a card
+6. Play a card in your hand
+9. Exit the game
 """)
     match userInput:
         case '1':
@@ -74,6 +78,11 @@ tile 4 Top Left to tile 4 Top Right
 """)
             returnFlag = table.gameLogic.buildNewRoad(player, table, userInput)
         case '5':
+            returnFlag = cards.purchaseCard(player)
+        case '6':
+            userInput = input("Which card would you like to play?\n")
+            returnFlag = cards.playCard(player, table, userInput)
+        case '9':
             print("Thank you for playing!")
             quit()
         case 'quit':
@@ -82,3 +91,4 @@ tile 4 Top Left to tile 4 Top Right
         case _:
             print(f"Invalid input: {userInput}. Please try again.\n")
             returnFlag = -1
+    cards.specialtyCardCheck(player, table)

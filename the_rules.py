@@ -461,7 +461,7 @@ cityData = {
         },
         4: {
             "Status": "0",
-            "Locations": ["9-CR", "7-BL", "12-TR"]
+            "Locations": ["9-CR", "7-BL", "12-TL"]
         },
         5: {
             "Status": "0",
@@ -607,33 +607,44 @@ class GameLogic:
                                 player.cityData['Towns'].append(location)
                             player.availableCities -= 1
                             player.currentPoints += 1
+                            userInputConnection = coordsToCityPos(userInput, self.cityData)
+                            cityVerification(player, userInputConnection)
                             print("Town Built!")
+                            print(player.longestRoadData)
                             return 0
         print("Invalid Coordinates: "+userInput+". Please try again.")
         return -1
 
     def buildCity(self, player, board, userInput):
-            for row in self.cityData:
-                for city in self.cityData[row]:
-                    for location in self.cityData[row][city]['Locations']:
-                        if location == userInput:
-                            if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
-                                self.cityData[row][city]['Status'] = f'{RED}X{RESET}'
-                                board.daBoard = updateCities(self.cityData, board.daBoard)
-                                for location in self.cityData[row][city]['Locations']:    
-                                    player.cityData['Towns'].remove(location)
-                                    player.cityData['Cities'].append(location)
-                                player.currentPoints += 1
-                                print("City Built!")
-                                return 0
-                            elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
-                                print("A city already exist here!")
-                                return -1
-                            else:
-                                print("There is no town here!")
-                                return -1
-            print("Invalid Coordinates: "+userInput+". Please try again.")
+        if (player.resources['Ore'] < 3 and player.resources['Grain'] < 2):
+            print(f"""
+Insufficient Resources. Must have:
+1/{player.resources['Ore']} Ore
+1/{player.resources['Grain']} Grain
+""")
             return -1
+            
+        for row in self.cityData:
+            for city in self.cityData[row]:
+                for location in self.cityData[row][city]['Locations']:
+                    if location == userInput:
+                        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
+                            self.cityData[row][city]['Status'] = f'{RED}X{RESET}'
+                            board.daBoard = updateCities(self.cityData, board.daBoard)
+                            for location in self.cityData[row][city]['Locations']:    
+                                player.cityData['Towns'].remove(location)
+                                player.cityData['Cities'].append(location)
+                            player.currentPoints += 1
+                            print("City Built!")
+                            return 0
+                        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
+                            print("A city already exist here!")
+                            return -1
+                        else:
+                            print("There is no town here!")
+                            return -1
+        print("Invalid Coordinates: "+userInput+". Please try again.")
+        return -1
 
     def buildRoad(self, player, board, userInput, previousPoint):
         #Fetch the points
@@ -651,12 +662,23 @@ class GameLogic:
                         board.daBoard = updateRoads(self.roadData, board.daBoard)    
                         player.roadData.append([row,road])
                         player.availableRoads -= 1
+                        roadVerification(player, userInputConnection, previousPointConnection, self.cityData)
                         print("Road Built!")
                         return 0
         print("Invalid Coordinates: "+userInput+". Please try again.")
         return -1
 
     def buildNewTown(self, player, board, userInput):
+        if (player.resources['Brick'] < 1 and player.resources['Lumber'] < 1 and player.resources['Wool'] < 1 and player.resources['Grain'] < 1):
+            print(f"""
+Insufficient Resources. Must have:
+1/{player.resources['Brick']} Brick
+1/{player.resources['Lumber']} Lumber
+1/{player.resources['Wool']} Wool
+1/{player.resources['Grain']} Grain
+""")
+            return -1
+        
         userInputConnection = coordsToCityPos(userInput, self.cityData)
         if userInputConnection != -1:
             for road in player.roadData:
@@ -667,27 +689,67 @@ class GameLogic:
         return -1
     
     def buildNewRoad(self, player, board, userInput):
+        if (player.resources['Brick'] < 1 and player.resources['Lumber'] < 1):
+            print(f"""
+Insufficient Resources. Must have:
+1/{player.resources['Brick']} Brick
+1/{player.resources['Lumber']} Lumber
+""")
+            return -1
+
         userInputTokens = userInput.split("/")
-        return GameLogic.buildRoad(self, player, board, userInputTokens[1], userInputTokens[0])
+        if(len(userInputTokens) != 2):
+            print(f"Invalid range: {userInput}")
+            return -1
+
+        previousPointConnection = coordsToCityPos(userInputTokens[0], self.cityData)
+        validationFlag = 0
+        for entry in player.roadData:
+            if previousPointConnection in roadData[entry[0]][entry[1]]['Connections']:
+                validationFlag = 1
+
+        if validationFlag != 1:
+            print("No Connecting road")
+            return -1
+
+        result = GameLogic.buildRoad(self, player, board, userInputTokens[1], userInputTokens[0])
+        if  result == 0:
+            player.resources['Brick'] -= 1
+            player.resources['Lumber'] -= 1
+
+        return result
     
     #Roll the dice for the player, return the resources for that die results
     def rollDice(self, board, player):
         dieResult = random.randint(2,12) #Roll 2 dice
         print(f'Die Result: {dieResult}') #Debug checking
-        for tile in board.boardMap:
-            if tile.dieNumber == dieResult:
-                #Check to see if player has any towns or cities on this tile
-                for ownedTown in player.cityData['Towns']:
-                    townLocation = ownedTown.split("-")
-                    townID = townLocation[0]
-                    if townID == str(tile.id) and tile.id != 9:
-                        player.resources[tile.resource] += 1 #Give players one resource for town
-                for ownedCity in player.cityData['Cities']:
-                    cityLocation = ownedCity.split("-")
-                    cityID = cityLocation[0]
-                    if cityID == str(tile.id) and tile.id != 9:
-                        player.resources[tile.resource] += 2 #Give players two resource for city
-                continue
+        if dieResult != 7:
+            for tile in board.boardMap:
+                if tile.dieNumber == dieResult and tile.gk == False:
+                    #Check to see if player has any towns or cities on this tile
+                    for ownedTown in player.cityData['Towns']:
+                        townLocation = ownedTown.split("-")
+                        townID = townLocation[0]
+                        if townID == str(tile.id) and tile.id != 9:
+                            player.resources[tile.resource] += 1 #Give players one resource for town
+                    for ownedCity in player.cityData['Cities']:
+                        cityLocation = ownedCity.split("-")
+                        cityID = cityLocation[0]
+                        if cityID == str(tile.id) and tile.id != 9:
+                            player.resources[tile.resource] += 2 #Give players two resource for city
+                    continue
+        else:
+            newUserInput = input("""
+You rolled a 7. Where would you like to place Genghis Khan?
+Enter the tile ID you would like to place him on
+""")
+            returnFlag = board.moveGK(newUserInput)
+            while returnFlag != 0:
+                newUserInput = input("""
+Where would you like to place Genghis Khan?
+Enter the tile ID you would like to place him on
+""")
+                returnFlag = board.moveGK(newUserInput)
         return 0
 
 #Seperate Functions
@@ -743,3 +805,90 @@ def coordsToCityPos(userInput, data):
             if userInput in data[row][city]["Locations"]:
                 return f'{row}{city}'
     return -1
+
+def roadVerification(player, endPoint, startPoint, cityData):
+    #Verify city locations
+    startPointTokens = list(startPoint)
+
+    #If there is a city at the starting point begin a new longest road entry
+    print(cityData[startPointTokens[0]][int(startPointTokens[1])])
+    if(cityData[startPointTokens[0]][int(startPointTokens[1])]['Status'] != '0'):
+        print("Creating new road")
+        newEntry = {
+            "Sequence": [startPoint, endPoint],
+            "NoOfRoads": 1
+        }
+        player.longestRoadData.append(newEntry)
+        return 0
+    #If there is a city at the ending point find the entries with the starting point, normal entry
+    for longRoadData in player.longestRoadData:
+        print("Updating road")
+        if startPoint in longRoadData['Sequence']:
+            if (longRoadData['Sequence'][-1] == startPoint):
+                print("Adding to existing road")
+                longRoadData['Sequence'].append(endPoint)
+                longRoadData['NoOfRoads'] += 1
+
+                for longRoadData2 in player.longestRoadData:
+                    if (longRoadData2['Sequence'][-1] == endPoint) and longRoadData2 != longRoadData:
+                        print("Merging Roads")
+                        index = len(longRoadData2['Sequence']) - 2
+                        while index >= 0:
+                            longRoadData['Sequence'].append(longRoadData2['Sequence'][index])
+                            longRoadData['NoOfRoads']+=1
+                            index -= 1
+                        player.longestRoadData.remove(longRoadData2)
+                return 0
+            else:
+                #Verify forks in road
+                print("Splitting Road")
+                index = 0
+                newEntry = {
+                    "Sequence": [],
+                    "NoOfRoads": 0
+                }
+                while longRoadData['Sequence'][index] != startPoint:
+                    newEntry['Sequence'].append(longRoadData['Sequence'][index])
+                    newEntry['NoOfRoads'] += 1
+                    index += 1
+
+                newEntry['Sequence'].append(startPoint)
+                newEntry['Sequence'].append(endPoint)
+                newEntry['NoOfRoads'] += 1
+                player.longestRoadData.append(newEntry)
+                return 0
+
+def cityVerification(player, startPoint):
+    for longRoadData in player.longestRoadData:
+        if startPoint in longRoadData['Sequence'] and (startPoint != longRoadData['Sequence'][-1] or startPoint != longRoadData['Sequence'][0]):
+            print("Splitting road")
+            newEntryA = {
+                "Sequence": [],
+                "NoOfRoads": 0
+            }
+            newEntryB = {
+                "Sequence": [],
+                "NoOfRoads": 0
+            }
+            
+            index = 0
+            sequencePoint = longRoadData['Sequence'][index]
+
+            while sequencePoint != startPoint:
+                newEntryA['Sequence'].append(longRoadData['Sequence'][index])
+                newEntryA['NoOfRoads'] += 1
+                index += 1
+                sequencePoint = longRoadData['Sequence'][index]
+            newEntryA['Sequence'].append(longRoadData['Sequence'][index])
+
+            while index != len(longRoadData['Sequence']) - 1:
+                newEntryB['Sequence'].append(longRoadData['Sequence'][index])
+                newEntryB['NoOfRoads'] += 1
+                index += 1
+            newEntryB['Sequence'].append(longRoadData['Sequence'][index])
+
+            player.longestRoadData.append(newEntryA)
+            player.longestRoadData.append(newEntryB)
+            player.longestRoadData.remove(longRoadData)
+            return 0
+    print()
