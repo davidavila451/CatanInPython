@@ -1,10 +1,6 @@
 import random
 import re
 
-RED = "\x1b[31m"
-GREEN = "\x1b[32m"
-BLUE = "\x1b[34m"
-MAG = "\x1b[35m"
 RESET = "\x1b[0m"
 
 roadData = {
@@ -601,7 +597,7 @@ class GameLogic:
                             print("A city already exist here!")
                             return -1
                         else:
-                            self.cityData[row][city]['Status'] = f'{RED}x{RESET}'
+                            self.cityData[row][city]['Status'] = f'{player.COLOR}x{RESET}'
                             board.daBoard = updateCities(self.cityData, board.daBoard)
 
                             if player.availableCities != -1:
@@ -639,7 +635,7 @@ Insufficient Resources. Must have:
                 for location in self.cityData[row][city]['Locations']:
                     if location == userInput:
                         if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
-                            self.cityData[row][city]['Status'] = f'{RED}X{RESET}'
+                            self.cityData[row][city]['Status'] = f'{player.COLOR}X{RESET}'
                             board.daBoard = updateCities(self.cityData, board.daBoard)
                             for location in self.cityData[row][city]['Locations']:    
                                 player.cityData['Towns'].remove(location)
@@ -668,7 +664,7 @@ Insufficient Resources. Must have:
                         print("A road already exist here!")
                         return -1
                     else:
-                        self.roadData[row][road]['Status'] = f'{RED}{self.roadData[row][road]['Status']}{RESET}'
+                        self.roadData[row][road]['Status'] = f'{player.COLOR}{self.roadData[row][road]['Status']}{RESET}'
                         board.daBoard = updateRoads(self.roadData, board.daBoard)    
                         player.roadData.append([row,road])
                         player.availableRoads -= 1
