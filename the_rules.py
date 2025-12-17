@@ -603,9 +603,19 @@ class GameLogic:
                         else:
                             self.cityData[row][city]['Status'] = f'{RED}x{RESET}'
                             board.daBoard = updateCities(self.cityData, board.daBoard)
+
+                            if player.availableCities != -1:
+                                player.availableCities -= 1
+
                             for location in self.cityData[row][city]['Locations']:    
                                 player.cityData['Towns'].append(location)
-                            player.availableCities -= 1
+                                if player.availableCities == 0:
+                                    print("Adding starting resources")
+                                    locationID = location.split("-")
+                                    for tile in board.boardMap:
+                                        if str(tile.id) == locationID[0]:
+                                            player.resources[tile.resource] += 1
+                            
                             player.currentPoints += 1
                             userInputConnection = coordsToCityPos(userInput, self.cityData)
                             cityVerification(player, userInputConnection)
