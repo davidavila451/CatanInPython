@@ -581,101 +581,96 @@ class GameLogic:
     def __init__(self, board):
         self.cityData = cityData
         self.roadData = roadData
+        self.availableCityPlots = []
+        self.availableRoads = []
+        for row in cityData:
+            for city in cityData[row]:
+                self.availableCityPlots.append(f'{row}{city}')
+        for row in roadData:
+            for road in roadData[row]:
+                self.availableRoads.append(f'{row}{road}')
         board.daBoard = updateCities(self.cityData, board.daBoard)
         updateRoads(self.roadData, board.daBoard)
 
     #Search for a city that contains the proper ID and position sequence if NA return null
     def buildTown(self, player, board, userInput):
-        for row in self.cityData:
-            for city in self.cityData[row]:
-                for location in self.cityData[row][city]['Locations']:
-                    if location == userInput:
-                        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
-                            print("A town already exist here!")
-                            return -1
-                        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
-                            print("A city already exist here!")
-                            return -1
-                        else:
-                            self.cityData[row][city]['Status'] = f'{player.COLOR}x{RESET}'
-                            board.daBoard = updateCities(self.cityData, board.daBoard)
+        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[userInput[0]][int(userInput[1])]['Status']):
+            print("A town already exist here!")
+            return -1
+        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[userInput[0]][int(userInput[1])]['Status']):
+            print("A city already exist here!")
+            return -1
+        else:
+            self.cityData[userInput[0]][int(userInput[1])]['Status'] = f'{player.COLOR}x{RESET}'
+            self.availableCityPlots.remove(userInput)
+            board.daBoard = updateCities(self.cityData, board.daBoard)
 
-                            if player.availableCities != -1:
-                                player.availableCities -= 1
+            if player.availableCities != -1:
+                player.availableCities -= 1
 
-                            for location in self.cityData[row][city]['Locations']:    
-                                player.cityData['Towns'].append(location)
-                                if player.availableCities == 0:
-                                    print("Adding starting resources")
-                                    locationID = location.split("-")
-                                    for tile in board.boardMap:
-                                        if str(tile.id) == locationID[0]:
-                                            player.resources[tile.resource] += 1
-                            
-                            player.currentPoints += 1
-                            userInputConnection = coordsToCityPos(userInput, self.cityData)
-                            cityVerification(player, userInputConnection)
-                            print("Town Built!")
-                            print(player.longestRoadData)
-                            return 0
-        print("Invalid Coordinates: "+userInput+". Please try again.")
-        return -1
+            for location in self.cityData[userInput[0]][int(userInput[1])]['Locations']:    
+                player.cityData['Towns'].append(location)
+                if player.availableCities == 0:
+                    print("Adding starting resources")
+                    locationID = location.split("-")
+                    for tile in board.boardMap:
+                        if str(tile.id) == locationID[0] and tile.id != 9:
+                            player.resources[tile.resource] += 1
+            
+            player.currentPoints += 1
+            cityVerification(player, userInput)
+            print("Town Built!")
+            return 0
 
     def buildCity(self, player, board, userInput):
         if (player.resources['Ore'] < 3 and player.resources['Grain'] < 2):
             print(f"""
 Insufficient Resources. Must have:
-1/{player.resources['Ore']} Ore
-1/{player.resources['Grain']} Grain
+3/{player.resources['Ore']} Ore
+2/{player.resources['Grain']} Grain
 """)
             return -1
             
-        for row in self.cityData:
-            for city in self.cityData[row]:
-                for location in self.cityData[row][city]['Locations']:
-                    if location == userInput:
-                        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[row][city]['Status']):
-                            self.cityData[row][city]['Status'] = f'{player.COLOR}X{RESET}'
-                            board.daBoard = updateCities(self.cityData, board.daBoard)
-                            for location in self.cityData[row][city]['Locations']:    
-                                player.cityData['Towns'].remove(location)
-                                player.cityData['Cities'].append(location)
-                            player.currentPoints += 1
-                            print("City Built!")
-                            return 0
-                        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[row][city]['Status']):
-                            print("A city already exist here!")
-                            return -1
-                        else:
-                            print("There is no town here!")
-                            return -1
-        print("Invalid Coordinates: "+userInput+". Please try again.")
-        return -1
+        if re.search(r'^\x1b\[3[1-5]mx\x1b\[0m$',self.cityData[userInput[0]][int(userInput[1])]['Status']):
+            self.cityData[userInput[0]][int(userInput[1])]['Status'] = f'{player.COLOR}X{RESET}'
+            board.daBoard = updateCities(self.cityData, board.daBoard)
+            for location in self.cityData[userInput[0]][int(userInput[1])]['Locations']:    
+                player.cityData['Towns'].remove(location)
+                player.cityData['Cities'].append(location)
+            player.currentPoints += 1
+            player.resources['Ore'] -= 3
+            player.resources['Grain'] -= 2
+            print("City Built!")
+            return 0
+        elif re.search(r'^\x1b\[3[1-5]mX\x1b\[0m$',self.cityData[userInput[0]][int(userInput[1])]['Status']):
+            print("A city already exist here!")
+            return -1
+        else:
+            print("There is no town here!")
+            return -1
 
     def buildRoad(self, player, board, userInput, previousPoint):
-        #Fetch the points
-        previousPointConnection = coordsToCityPos(previousPoint, self.cityData)
-        userInputConnection = coordsToCityPos(userInput, self.cityData)
         #Built the road
         for row in self.roadData:
             for road in self.roadData[row]:
-                if (userInputConnection in roadData[row][road]["Connections"]) and (previousPointConnection in roadData[row][road]["Connections"]):
+                if (userInput in roadData[row][road]["Connections"]) and (previousPoint in roadData[row][road]["Connections"]):
                     if re.search(r'^\x1b\[3[1-5]m[-\\/]\x1b\[0m$',self.roadData[row][road]['Status']):
                         print("A road already exist here!")
                         return -1
                     else:
                         self.roadData[row][road]['Status'] = f'{player.COLOR}{self.roadData[row][road]['Status']}{RESET}'
+                        self.availableRoads.remove(f'{row}{road}')
                         board.daBoard = updateRoads(self.roadData, board.daBoard)    
                         player.roadData.append([row,road])
                         player.availableRoads -= 1
-                        roadVerification(player, userInputConnection, previousPointConnection, self.cityData)
+                        roadVerification(player, userInput, previousPoint, self.cityData)
                         print("Road Built!")
                         return 0
         print("Invalid Coordinates: "+userInput+". Please try again.")
         return -1
 
     def buildNewTown(self, player, board, userInput):
-        if (player.resources['Brick'] < 1 and player.resources['Lumber'] < 1 and player.resources['Wool'] < 1 and player.resources['Grain'] < 1):
+        if ((player.resources['Brick'] < 1) and (player.resources['Lumber'] < 1) and (player.resources['Wool'] < 1) and (player.resources['Grain'] < 1)):
             print(f"""
 Insufficient Resources. Must have:
 1/{player.resources['Brick']} Brick
@@ -685,16 +680,19 @@ Insufficient Resources. Must have:
 """)
             return -1
         
-        userInputConnection = coordsToCityPos(userInput, self.cityData)
-        if userInputConnection != -1:
+        if userInput != -1:
             for road in player.roadData:
-                if userInputConnection in self.roadData[road[0]][road[1]]['Connections']:
+                if userInput in self.roadData[road[0]][road[1]]['Connections']:
                     GameLogic.buildTown(self, player, board, userInput)
+                    player.resources['Brick'] -= 1
+                    player.resources['Lumber'] -= 1
+                    player.resources['Wool'] -= 1
+                    player.resources['Grain'] -= 1
                     return 0
         print("Invalid Coordinates: "+userInput+". Please try again")
         return -1
     
-    def buildNewRoad(self, player, board, userInput):
+    def buildNewRoad(self, player, board, userInput, previousPoint):
         if (player.resources['Brick'] < 1 and player.resources['Lumber'] < 1):
             print(f"""
 Insufficient Resources. Must have:
@@ -703,22 +701,19 @@ Insufficient Resources. Must have:
 """)
             return -1
 
-        userInputTokens = userInput.split("/")
-        if(len(userInputTokens) != 2):
-            print(f"Invalid range: {userInput}")
-            return -1
-
-        previousPointConnection = coordsToCityPos(userInputTokens[0], self.cityData)
         validationFlag = 0
         for entry in player.roadData:
-            if previousPointConnection in roadData[entry[0]][entry[1]]['Connections']:
+            print(entry)
+            print(previousPoint)
+            print(roadData[entry[0]][entry[1]]['Connections'])
+            if previousPoint in roadData[entry[0]][entry[1]]['Connections']:
                 validationFlag = 1
 
         if validationFlag != 1:
             print("No Connecting road")
             return -1
 
-        result = GameLogic.buildRoad(self, player, board, userInputTokens[1], userInputTokens[0])
+        result = GameLogic.buildRoad(self, player, board, userInput, previousPoint)
         if  result == 0:
             player.resources['Brick'] -= 1
             player.resources['Lumber'] -= 1
@@ -805,19 +800,11 @@ def updateRoads(data, board):
             board[entry[1]][entry[0]] = data[entry[1]][entry[2]]['Status']
     return board
 
-def coordsToCityPos(userInput, data):
-    for row in data:
-        for city in data[row]:
-            if userInput in data[row][city]["Locations"]:
-                return f'{row}{city}'
-    return -1
-
 def roadVerification(player, endPoint, startPoint, cityData):
     #Verify city locations
     startPointTokens = list(startPoint)
 
     #If there is a city at the starting point begin a new longest road entry
-    print(cityData[startPointTokens[0]][int(startPointTokens[1])])
     if(cityData[startPointTokens[0]][int(startPointTokens[1])]['Status'] != '0'):
         print("Creating new road")
         newEntry = {
@@ -897,4 +884,3 @@ def cityVerification(player, startPoint):
             player.longestRoadData.append(newEntryB)
             player.longestRoadData.remove(longRoadData)
             return 0
-    print()

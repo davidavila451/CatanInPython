@@ -1,3 +1,4 @@
+import random
 class Bot:
     resources = {
         'Lumber': 10,
@@ -11,6 +12,8 @@ class Bot:
 
     availableCities = 2
     availableRoads = 2
+
+    playerAffinity = 5
 
     ownedSeqRoads = 0
     longestRoadData = []
@@ -27,9 +30,11 @@ class Bot:
 
     roadData = []
 
-    def __inti__(self, COLOR):
+    def __inti__(self):
         self.resources = Bot.resources
-        self.COLOR = COLOR
+        self.COLOR = ""
+        self.colorTitle = ""
+        self.playerAffinity = Bot.playerAffinity
         self.availableCities = Bot.availableCities
         self.longestRoadData = Bot.longestRoadData
         self.ownedRoads = Bot.ownedRoads
@@ -42,76 +47,66 @@ class Bot:
 
     def initialSetUp(self, table):
         #Build Town
-        clearFlagA = -1
-        while clearFlagA != 0:
-            userInput = input(f"""
-Select where you would like to build a city.
-Enter the tile ID (top number) followed by position:
-Ex. 4-TL would place a town on tile 4 in the (T)op (L)eft.
-                            
-You have {str(self.availableCities)} left to place.
-""")
-            if(userInput == "quit"):
-                quit()
-            previousPoint = userInput
-            clearFlagA = table.gameLogic.buildTown(self, table, userInput)
-        
-        clearFlagB = -1
+        townChoiceIndex = random.randint(0,len(table.gameLogic.availableCityPlots)-1)
+        townChoice = table.gameLogic.availableCityPlots[townChoiceIndex]
+        table.gameLogic.buildTown(self, table, townChoice)
+        print("Built Town")
 
         #Build Road
-        while clearFlagB != 0:
-            userInput = input(f"""
-Select the point you would like to build your road to
-from the town you just built.
-Enter the tile ID (top number) followed by position:
-Ex. 4-TR would place a road to tile (4) in the (T)op (R)ight.
-                        
-You have {str(self.availableRoads)} left to place.
-""")
-            if(userInput == "quit"):
-                quit()
-            clearFlagB = table.gameLogic.buildRoad(self, table, userInput, previousPoint)
+        listOfAvailRoads = []
+        for index in table.gameLogic.availableRoads:
+            if townChoice in table.gameLogic.roadData[index[0]][int(index[1])]['Connections']:
+                listOfAvailRoads.append(index)
 
-    def onTurn(self, table, cards):
-        returnFlag = 0
-        if returnFlag == 0:
-            self.printPlayer()
+        roadChoiceIndex = random.randint(0, len(listOfAvailRoads)-1)
+        roadChoice = listOfAvailRoads[roadChoiceIndex]
+        print(roadChoice)
+        for connection in table.gameLogic.roadData[roadChoice[0]][int(roadChoice[1])]['Connections']:
+            if connection != townChoice:
+                newPoint = connection
+        table.gameLogic.buildRoad(self, table, newPoint, townChoice)
+        print("Built Road")
+
+    def onTurn(self, table, cards, players):
+        table.gameLogic.rollDice(table, self)
+
+        numbers=[1,2,3,4]
+        weights=[0.25,0.25,0.25,0.25]
+        decision = random.choices(numbers, weights=weights, k=1)
+
+        match decision:
+            case 1:
+                #Build road
+                print()
+            case 2:
+                #Purchase Card
+                print()
+            case 3:
+                #build town
+                print()
+            case 4:
+                #Initiate Trade
+                print()
+
+        print("Turn Ended")
+
+    def initiateTrade(self):
+        if self.playerAffinity >= 5:
+            print('"What are you looking for?"')
             userInput = input("""
-What would you like to do?
-2. Upgrade a town you currently own to a city
-3. Build a town
-4. Build a road
-5. Purchase a card
-6. Play a card in your hand
-9. Exit the game
+1. Lumber
+2. Wool
+3. Grain
+5. Brick
+4. Ore
+5. Nevermind
 """)
-            match userInput:
-                case '2':
-                    userInput = input("What town would you like to upgrade?\n")
-                    returnFlag = table.gameLogic.buildCity(self, table, userInput)
-                case '3':
-                    userInput = input("Where would you like to build a new town?\n")
-                    returnFlag = table.gameLogic.buildNewTown(self, table, userInput)
-                case '4':
-                    userInput = input("""
-        Where would you like to build a new road?
-        Enter the starting and ending points as shown
-        Ex. 4-TL/4-TR would build a road from
-        tile 4 Top Left to tile 4 Top Right
-        """)
-                    returnFlag = table.gameLogic.buildNewRoad(self, table, userInput)
-                case '5':
-                    returnFlag = cards.purchaseCard(self)
-                case '6':
-                    userInput = input("Which card would you like to play?\n")
-                    returnFlag = cards.playCard(self, table, userInput)
-                case '9':
-                    print("Thank you for playing!")
-                    quit()
-                case 'quit':
-                    print("Thank you for playing!")
-                    quit()
-                case _:
-                    print(f"Invalid input: {userInput}. Please try again.\n")
-                    returnFlag = -1
-            cards.specialtyCardCheck(self, table)
+            clearFlag = -1
+            while clearFlag != 0:
+                match userInput:
+                    case "1":
+                        print()
+        else:
+            print('"I do not wish to trade with the likes of you!"')
+            return -1
+        print()

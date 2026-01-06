@@ -1,10 +1,12 @@
+RESET = "\x1b[0m"
+
 #Player class which will keep track of the players resources, points, and action cards
 class Player:
     resources = {
-        'Lumber': 10,
+        'Lumber': 0,
         'Wool': 0,
         'Grain': 0,
-        'Brick': 10,
+        'Brick': 0,
         'Ore': 0
     }
 
@@ -31,6 +33,7 @@ class Player:
     def __inti__(self):
         self.resources = Player.resources
         self.COLOR = ""
+        self.colorTitle = ""
         self.availableCities = Player.availableCities
         self.longestRoadData = Player.longestRoadData
         self.ownedRoads = Player.ownedRoads
@@ -95,8 +98,12 @@ You have {str(self.availableCities)} left to place.
 """)
             if(userInput == "quit"):
                 quit()
-            previousPoint = userInput
-            clearFlagA = table.gameLogic.buildTown(self, table, userInput)
+            cityChoice = scrubCityInput(userInput, table.gameLogic)
+            if cityChoice == -1:
+                clearFlagA = -1
+            else:
+                clearFlagA = table.gameLogic.buildTown(self, table, cityChoice)
+                previousPoint = cityChoice
         
         clearFlagB = -1
 
@@ -112,14 +119,21 @@ You have {str(self.availableRoads)} left to place.
 """)
             if(userInput == "quit"):
                 quit()
-            clearFlagB = table.gameLogic.buildRoad(self, table, userInput, previousPoint)
+            
+            cityChoice = scrubCityInput(userInput, table.gameLogic)
+            if cityChoice == -1:
+                clearFlagB = -1
+            else:
+                clearFlagB = table.gameLogic.buildRoad(self, table, cityChoice, previousPoint)
 
-    def onTurn(self, table, cards):
-        returnFlag = 0
-        if returnFlag == 0:
+    def onTurn(self, table, cards, players):
+        table.gameLogic.rollDice(table, self)
+        returnFlag = -1
+        while returnFlag == -1:
             self.printPlayer()
             userInput = input("""
 What would you like to do?
+1. Trade with another player
 2. Upgrade a town you currently own to a city
 3. Build a town
 4. Build a road
@@ -128,12 +142,36 @@ What would you like to do?
 9. Exit the game
 """)
             match userInput:
+                case '1':
+                    userInput = input(f"""
+Who would you like to trade with?
+1. {players[1].COLOR}{players[1].colorTitle}{RESET}
+2. {players[2].COLOR}{players[2].colorTitle}{RESET}
+3. {players[3].COLOR}{players[3].colorTitle}{RESET}
+""")
+                    match userInput:
+                        case "1":
+                            returnFlag = players[1].initiateTrade()
+                        case "2":
+                            returnFlag = players[2].initiateTrade()
+                        case "3":
+                            returnFlag = players[3].initiateTrade()
+                        case _:
+                            returnFlag = -1
                 case '2':
                     userInput = input("What town would you like to upgrade?\n")
-                    returnFlag = table.gameLogic.buildCity(self, table, userInput)
+                    cityChoice = scrubCityInput(userInput, table.gameLogic)
+                    if cityChoice == -1:
+                        returnFlag = -1
+                    else:
+                        returnFlag = table.gameLogic.buildCity(self, table, cityChoice)
                 case '3':
                     userInput = input("Where would you like to build a new town?\n")
-                    returnFlag = table.gameLogic.buildNewTown(self, table, userInput)
+                    cityChoice = scrubCityInput(userInput, table.gameLogic)
+                    if cityChoice == -1:
+                        returnFlag = -1
+                    else:
+                        returnFlag = table.gameLogic.buildNewTown(self, table, cityChoice)
                 case '4':
                     userInput = input("""
         Where would you like to build a new road?
@@ -141,7 +179,17 @@ What would you like to do?
         Ex. 4-TL/4-TR would build a road from
         tile 4 Top Left to tile 4 Top Right
         """)
-                    returnFlag = table.gameLogic.buildNewRoad(self, table, userInput)
+                    userInputTokens = userInput.split("/")
+                    if(len(userInputTokens) != 2):
+                        print(f"Invalid range: {userInput}")
+                        returnFlag = -1
+                    else:
+                        cityChoiceA = scrubCityInput(userInputTokens[0], table.gameLogic)
+                        cityChoiceB = scrubCityInput(userInputTokens[1], table.gameLogic)
+                        if cityChoiceA == -1 or cityChoiceB == -1:
+                            returnFlag = -1
+                        else:
+                            returnFlag = table.gameLogic.buildNewRoad(self, table, cityChoiceB, cityChoiceA)
                 case '5':
                     returnFlag = cards.purchaseCard(self)
                 case '6':
@@ -157,3 +205,12 @@ What would you like to do?
                     print(f"Invalid input: {userInput}. Please try again.\n")
                     returnFlag = -1
             cards.specialtyCardCheck(self, table)
+
+def scrubCityInput(userInput, game):
+    for row in game.cityData:
+            for city in game.cityData[row]:
+                if userInput in game.cityData[row][city]['Locations']:
+                    return(f'{row}{city}')
+
+    print("Invalid Coordinates: "+userInput+". Please try again.")
+    return -1

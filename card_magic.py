@@ -78,8 +78,20 @@ class Deck:
             print("There are no more cards to purchase")
             return -1
         
+        if (player.resources['Wool'] < 1) and (player.resources['Grain'] < 1) and (player.resources['Ore'] < 1):
+            print(f"""
+Insuffecient resources:
+1/{player.resources['Wool']} Wool
+1/{player.resources['Grain']} Grain
+1/{player.resources['Ore']} Ore
+""")
+            return -1
+        
         chosenNumber = self.shuffledDeck.pop(0)
         print("Card Purchased")
+        player.resources['Wool'] -= 1
+        player.resources['Grain'] -= 1
+        player.resources['Ore'] -= 1
         print(f"You draw a {self.allCards[chosenNumber]["title"]} card.")
         match self.allCards[chosenNumber]["title"]:
             case "Knight":
